@@ -23,7 +23,7 @@ VALID_KEYS = {
 }
 
 # Ordered list of wizard steps
-STEPS = ["license", "region", "privacy", "complete"]
+STEPS = ["license", "region", "privacy", "user", "complete"]
 
 
 # ---------------------------------------------------------------------------
@@ -72,15 +72,54 @@ def step_privacy():
     if request.method == "POST":
         session["privacy_diagnostics"] = "diagnostics" in request.form
         session["privacy_location"] = "location" in request.form
-        return redirect(url_for("step_complete"))
+        return redirect(url_for("step_user"))
     return render_template("privacy.html", step=2, total=len(STEPS) - 1)
+
+
+@app.route("/setup/user", methods=["GET", "POST"])
+def step_user():
+    if not session.get("license_validated"):
+        return redirect(url_for("step_license"))
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+        avatar_color = request.form.get("avatar_color", "#0078d4")
+        if not username:
+            error = "Please enter a username."
+        elif len(username) < 2:
+            error = "Username must be at least 2 characters."
+        elif not password:
+            error = "Please enter a password."
+        elif len(password) < 4:
+            error = "Password must be at least 4 characters."
+        elif password != confirm:
+            error = "Passwords do not match."
+        else:
+            session["username"] = username
+            session["avatar_color"] = avatar_color
+            return redirect(url_for("step_complete"))
+    return render_template("user.html", step=3, total=len(STEPS) - 1, error=error)
 
 
 @app.route("/setup/complete")
 def step_complete():
     if not session.get("license_validated"):
         return redirect(url_for("step_license"))
-    return render_template("complete.html", step=3, total=len(STEPS) - 1)
+    return render_template("complete.html", step=4, total=len(STEPS) - 1)
+
+
+@app.route("/desktop")
+def desktop():
+    if not session.get("license_validated"):
+        return redirect(url_for("step_license"))
+    return render_template(
+        "desktop.html",
+        username=session.get("username", "User"),
+        avatar_color=session.get("avatar_color", "#0078d4"),
+        region=session.get("region", "en-US"),
+    )
 
 
 # ---------------------------------------------------------------------------
