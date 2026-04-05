@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="step-icon complete-icon" aria-hidden="true">
+  <svg viewBox="0 0 64 64" fill="none">
+    <circle cx="32" cy="32" r="31" fill="#0078d4"/>
+    <path d="M18 33l10 10 18-20" stroke="#fff" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</div>
+
+<h1 class="oobe-title">WebOS is ready!</h1>
+<p class="oobe-subtitle">
+  Your copy of WebOS has been activated and configured. Enjoy your new system.
+</p>
+
+<div class="summary-box">
+  <h2 class="summary-title">Setup Summary</h2>
+  <dl class="summary-list">
+    <div class="summary-row">
+      <dt>Product Key</dt>
+      <dd class="key-mask">
+        {% set k = session.get('license_key', '') %}
+        {% if k %}
+          {{ k[:5] }}-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-{{ k[-5:] }}
+        {% else %}–{% endif %}
+      </dd>
+    </div>
+    <div class="summary-row">
+      <dt>Region</dt>
+      <dd>{{ session.get('region', 'Not set') }}</dd>
+    </div>
+    <div class="summary-row">
+      <dt>Time Zone</dt>
+      <dd>{{ session.get('timezone', 'UTC') }}</dd>
+    </div>
+    <div class="summary-row">
+      <dt>Diagnostics</dt>
+      <dd>{{ 'Enabled' if session.get('privacy_diagnostics') else 'Disabled' }}</dd>
+    </div>
+    <div class="summary-row">
+      <dt>Location Services</dt>
+      <dd>{{ 'Enabled' if session.get('privacy_location') else 'Disabled' }}</dd>
+    </div>
+  </dl>
+</div>
+
+<div class="btn-row btn-row-center">
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Start over</a>
+</div>
+
+{% endblock %}

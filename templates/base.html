@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebOS Setup</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <!-- Full-screen OOBE wrapper -->
+  <div class="oobe-root">
+
+    <!-- Top bar with OS branding -->
+    <header class="oobe-header">
+      <div class="oobe-logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect width="14" height="14" x="1"  y="1"  fill="#0078d4"/>
+          <rect width="14" height="14" x="17" y="1"  fill="#0078d4" opacity=".75"/>
+          <rect width="14" height="14" x="1"  y="17" fill="#0078d4" opacity=".75"/>
+          <rect width="14" height="14" x="17" y="17" fill="#0078d4" opacity=".5"/>
+        </svg>
+        <span class="logo-text">WebOS</span>
+      </div>
+    </header>
+
+    <!-- Central card -->
+    <main class="oobe-card" role="main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Progress dots -->
+    <footer class="oobe-footer">
+      {% if total is defined %}
+        <div class="progress-dots" aria-label="Setup progress">
+          {% for i in range(total) %}
+            <span class="dot {% if i == step %}active{% elif i < step %}done{% endif %}"
+                  aria-hidden="true"></span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </footer>
+
+  </div>
+</body>
+</html>
