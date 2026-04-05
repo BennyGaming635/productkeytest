@@ -18,11 +18,15 @@
   <h2 class="summary-title">Setup Summary</h2>
   <dl class="summary-list">
     <div class="summary-row">
+      <dt>Username</dt>
+      <dd>{{ session.get('username', '–') }}</dd>
+    </div>
+    <div class="summary-row">
       <dt>Product Key</dt>
       <dd class="key-mask">
         {% set k = session.get('license_key', '') %}
         {% if k %}
-          {{ k[:5] }}-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-{{ k[-5:] }}
+          &bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-&bull;&bull;&bull;&bull;&bull;-{{ k.split('-')[-1] }}
         {% else %}–{% endif %}
       </dd>
     </div>
@@ -46,7 +50,7 @@
 </div>
 
 <div class="btn-row btn-row-center">
-  <a href="{{ url_for('index') }}" class="btn btn-primary">Start over</a>
+  <a href="{{ url_for('desktop') }}" class="btn btn-primary">Launch WebOS &rarr;</a>
 </div>
 
 {% endblock %}

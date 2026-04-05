@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebOS Desktop</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --shelf-h: 56px;
+      --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      font-family: var(--font);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Desktop / Wallpaper ─────────────────────────────── */
+    #desktop {
+      position: fixed; inset: 0;
+      bottom: var(--shelf-h);
+      background:
+        radial-gradient(ellipse at 20% 80%, #2d1b69 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 20%, #0d4f8c 0%, transparent 55%),
+        radial-gradient(ellipse at 55% 55%, #0a3d62 0%, transparent 60%),
+        linear-gradient(160deg, #0f0c29 0%, #1a1a4e 40%, #0d3b6e 75%, #1b4f72 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 20px;
+    }
+
+    /* ── Desktop icons ───────────────────────────────────── */
+    .desktop-icons {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .desktop-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 150ms;
+      width: 72px;
+    }
+
+    .desktop-icon:hover { background: rgba(255,255,255,.12); }
+    .desktop-icon:active { background: rgba(255,255,255,.22); }
+
+    .desktop-icon svg {
+      width: 48px; height: 48px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+    }
+
+    .desktop-icon span {
+      font-size: 11px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,.6);
+      text-align: center;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    /* ── Shelf ───────────────────────────────────────────── */
+    #shelf {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--shelf-h);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,.08);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 6px;
+      z-index: 100;
+    }
+
+    /* launcher */
+    .shelf-launcher {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 150ms;
+      flex-shrink: 0;
+    }
+    .shelf-launcher:hover  { background: rgba(255,255,255,.22); }
+    .shelf-launcher:active { background: rgba(255,255,255,.32); }
+
+    .shelf-divider {
+      width: 1px; height: 28px;
+      background: rgba(255,255,255,.15);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
+    /* pinned app icons */
+    .shelf-apps {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .shelf-app {
+      width: 44px; height: 44px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 150ms;
+      position: relative;
+    }
+    .shelf-app:hover  { background: rgba(255,255,255,.12); }
+    .shelf-app:active { background: rgba(255,255,255,.24); }
+    .shelf-app svg { width: 28px; height: 28px; }
+    .shelf-app[data-active]::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%; transform: translateX(-50%);
+      width: 4px; height: 4px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    /* Tooltip */
+    .shelf-app[title]:hover::before {
+      content: attr(title);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,.8);
+      color: #fff;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 200;
+    }
+
+    /* Status area (right) */
+    .shelf-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,.85);
+    }
+    .status-icons svg { width: 18px; height: 18px; }
+
+    #clock {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      letter-spacing: .3px;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    /* User avatar bubble */
+    .shelf-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,.3);
+      transition: border-color 150ms;
+    }
+    .shelf-avatar:hover { border-color: rgba(255,255,255,.7); }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: calc(var(--shelf-h) + 16px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(30,30,30,.92);
+      color: #fff;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 250ms;
+      z-index: 500;
+      white-space: nowrap;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── Tour overlay ────────────────────────────────────── */
+    #tour-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fade-in 300ms ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    #tour-overlay.hiding {
+      animation: fade-out 250ms ease forwards;
+    }
+
+    @keyframes fade-out {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+
+    .tour-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 44px 32px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+      animation: card-up 300ms ease;
+      position: relative;
+    }
+
+    @keyframes card-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .tour-step-icon {
+      font-size: 48px;
+      line-height: 1;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .tour-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1b1b1b;
+      margin-bottom: 10px;
+      line-height: 1.25;
+    }
+
+    .tour-body {
+      font-size: 14px;
+      color: #605e5c;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .tour-progress {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+
+    .tour-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #d1d1d1;
+      transition: background 200ms, width 200ms;
+    }
+    .tour-dot.active {
+      background: #0078d4;
+      width: 18px;
+      border-radius: 3px;
+    }
+    .tour-dot.done { background: #0078d4; opacity: .4; }
+
+    .tour-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tour-skip {
+      font-size: 13px;
+      color: #605e5c;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .tour-skip:hover { color: #1b1b1b; }
+
+    .tour-btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .tour-btn {
+      padding: 9px 22px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: background 120ms;
+    }
+
+    .tour-btn-primary {
+      background: #0078d4;
+      color: #fff;
+      border-color: #0078d4;
+    }
+    .tour-btn-primary:hover  { background: #106ebe; border-color: #106ebe; }
+    .tour-btn-primary:active { background: #005a9e; border-color: #005a9e; }
+
+    .tour-btn-secondary {
+      background: #fff;
+      color: #0078d4;
+      border-color: #0078d4;
+    }
+    .tour-btn-secondary:hover  { background: #eff6fc; }
+  </style>
+</head>
+<body>
+
+<!-- ── Desktop area ─────────────────────────────────────── -->
+<div id="desktop">
+  <div class="desktop-icons">
+    <div class="desktop-icon" onclick="openApp('Files')">
+      <svg viewBox="0 0 48 48" fill="none">
+        <rect x="4" y="12" width="40" height="30" rx="4" fill="#ffd700"/>
+        <path d="M4 20h40" stroke="#b8860b" stroke-width="1.5"/>
+        <rect x="4" y="12" width="16" height="8" rx="2" fill="#ffc107"/>
+      </svg>
+      <span>Files</span>
+    </div>
+    <div class="desktop-icon" onclick="openApp('Settings')">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="20" fill="#607d8b"/>
+        <circle cx="24" cy="24" r="8" fill="#eceff1"/>
+        <circle cx="24" cy="24" r="4" fill="#607d8b"/>
+        <rect x="22" y="4" width="4" height="8" rx="2" fill="#eceff1"/>
+        <rect x="22" y="36" width="4" height="8" rx="2" fill="#eceff1"/>
+        <rect x="4" y="22" width="8" height="4" rx="2" fill="#eceff1"/>
+        <rect x="36" y="22" width="8" height="4" rx="2" fill="#eceff1"/>
+      </svg>
+      <span>Settings</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Shelf ─────────────────────────────────────────────── -->
+<nav id="shelf" aria-label="Taskbar">
+
+  <!-- Launcher -->
+  <button class="shelf-launcher" onclick="openApp('App Launcher')" title="Launcher" aria-label="App Launcher">
+    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+      <rect x="3" y="3" width="4" height="4" rx="1"/>
+      <rect x="10" y="3" width="4" height="4" rx="1"/>
+      <rect x="17" y="3" width="4" height="4" rx="1"/>
+      <rect x="3" y="10" width="4" height="4" rx="1"/>
+      <rect x="10" y="10" width="4" height="4" rx="1"/>
+      <rect x="17" y="10" width="4" height="4" rx="1"/>
+      <rect x="3" y="17" width="4" height="4" rx="1"/>
+      <rect x="10" y="17" width="4" height="4" rx="1"/>
+      <rect x="17" y="17" width="4" height="4" rx="1"/>
+    </svg>
+  </button>
+
+  <div class="shelf-divider"></div>
+
+  <!-- Pinned apps -->
+  <div class="shelf-apps" id="shelf-apps">
+    <!-- Browser -->
+    <button class="shelf-app" title="Chrome Browser" aria-label="Chrome Browser" onclick="openApp('Chrome Browser')" data-active>
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" fill="#fff" stroke="#ddd" stroke-width=".5"/>
+        <circle cx="14" cy="14" r="6" fill="#4285f4"/>
+        <circle cx="14" cy="14" r="3" fill="#fff"/>
+        <path d="M14 1a13 13 0 010 26" fill="none"/>
+        <path d="M14 8h12.5" stroke="#fbbc05" stroke-width="3" stroke-linecap="round"/>
+        <path d="M14 8L7.5 19.5" stroke="#34a853" stroke-width="3" stroke-linecap="round"/>
+        <path d="M14 8L2 19.5" stroke="#ea4335" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="14" cy="14" r="5" fill="#4285f4"/>
+        <circle cx="14" cy="14" r="2.5" fill="#fff"/>
+      </svg>
+    </button>
+    <!-- Files -->
+    <button class="shelf-app" title="Files" aria-label="Files" onclick="openApp('Files')">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="2" y="7" width="24" height="18" rx="3" fill="#ffd54f"/>
+        <rect x="2" y="7" width="11" height="5" rx="2" fill="#ffc107"/>
+        <path d="M2 14h24" stroke="#f9a825" stroke-width="1"/>
+      </svg>
+    </button>
+    <!-- Web Store -->
+    <button class="shelf-app" title="Web Store" aria-label="Web Store" onclick="openApp('Web Store')">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="13" fill="#0f9d58"/>
+        <path d="M8 14l2 2 4-4 2 2 4-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <!-- Terminal -->
+    <button class="shelf-app" title="Terminal" aria-label="Terminal" onclick="openApp('Terminal')">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="2" y="4" width="24" height="20" rx="3" fill="#1a1a2e"/>
+        <path d="M7 11l4 3-4 3" stroke="#0f9" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M13 17h8" stroke="#0f9" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <!-- Calculator -->
+    <button class="shelf-app" title="Calculator" aria-label="Calculator" onclick="openApp('Calculator')">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect x="4" y="3" width="20" height="22" rx="3" fill="#5c6bc0"/>
+        <rect x="7" y="6" width="14" height="6" rx="1.5" fill="rgba(255,255,255,.25)"/>
+        <circle cx="9"  cy="17" r="2" fill="rgba(255,255,255,.7)"/>
+        <circle cx="14" cy="17" r="2" fill="rgba(255,255,255,.7)"/>
+        <circle cx="19" cy="17" r="2" fill="rgba(255,255,255,.7)"/>
+        <circle cx="9"  cy="22" r="2" fill="rgba(255,255,255,.7)"/>
+        <circle cx="14" cy="22" r="2" fill="rgba(255,255,255,.7)"/>
+        <circle cx="19" cy="22" r="2" fill="#ef9a9a"/>
+      </svg>
+    </button>
+    <!-- Settings -->
+    <button class="shelf-app" title="Settings" aria-label="Settings" onclick="openApp('Settings')">
+      <svg viewBox="0 0 28 28" fill="none">
+        <circle cx="14" cy="14" r="3.5" stroke="#fff" stroke-width="2"/>
+        <path d="M14 4v3M14 21v3M4 14h3M21 14h3M6.22 6.22l2.12 2.12M19.66 19.66l2.12 2.12M6.22 21.78l2.12-2.12M19.66 8.34l2.12-2.12"
+              stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Status area -->
+  <div class="shelf-status">
+    <div class="status-icons">
+      <!-- WiFi -->
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-label="WiFi connected" title="WiFi">
+        <path d="M10 15a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 2C6.13 2 2.64 3.55.29 6.1l1.42 1.42A11.94 11.94 0 0110 4c3.31 0 6.31 1.34 8.48 3.52l1.42-1.42A13.93 13.93 0 0010 2zm0 4a9.96 9.96 0 00-7.07 2.93l1.41 1.41A7.97 7.97 0 0110 8c2.21 0 4.21.9 5.66 2.34l1.41-1.41A9.96 9.96 0 0010 6zm0 4a5.99 5.99 0 00-4.24 1.76l1.41 1.41A3.99 3.99 0 0110 12c1.1 0 2.1.45 2.83 1.17l1.41-1.41A5.99 5.99 0 0010 10z"/>
+      </svg>
+      <!-- Battery -->
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-label="Battery" title="Battery">
+        <rect x="1" y="5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="2.5" y="6.5" width="10" height="7" rx="1" fill="currentColor" opacity=".7"/>
+        <path d="M16 8v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div id="clock" aria-live="polite">12:00</div>
+
+    <!-- User avatar -->
+    <div class="shelf-avatar" style="background: {{ avatar_color }};" onclick="openApp('Account')"
+         title="{{ username }}" aria-label="{{ username }}'s account">
+      {{ username[0]|upper }}
+    </div>
+  </div>
+</nav>
+
+<!-- ── Toast ─────────────────────────────────────────────── -->
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- ── Tour overlay ──────────────────────────────────────── -->
+<div id="tour-overlay" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+  <div class="tour-card">
+    <span class="tour-step-icon" id="tour-icon" aria-hidden="true">👋</span>
+    <h2 class="tour-title" id="tour-title"></h2>
+    <p  class="tour-body"  id="tour-body"></p>
+
+    <div class="tour-progress" id="tour-progress" aria-hidden="true"></div>
+
+    <div class="tour-actions">
+      <button class="tour-skip" onclick="closeTour()">Skip tour</button>
+      <div class="tour-btn-group">
+        <button class="tour-btn tour-btn-secondary" id="tour-prev" onclick="prevStep()" style="display:none;">Back</button>
+        <button class="tour-btn tour-btn-primary"   id="tour-next" onclick="nextStep()">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Clock ─────────────────────────────────────────────── */
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ── Toast ─────────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  function openApp(name) {
+    showToast(name + ' is not available in this WebOS demo.');
+  }
+
+  /* ── Tour ──────────────────────────────────────────────── */
+  const STEPS = [
+    {
+      icon: '👋',
+      title: 'Welcome to WebOS, {{ username|e }}!',
+      body: 'Your new cloud OS is ready. Take a quick tour to discover what's waiting for you.'
+    },
+    {
+      icon: '📌',
+      title: 'Your Shelf',
+      body: 'The shelf at the bottom is your home base. Launch apps, check notifications, and switch between tasks — all from one place.'
+    },
+    {
+      icon: '📡',
+      title: 'Stay Connected',
+      body: 'Your network, battery level, and current time are always visible in the status area on the right side of the shelf.'
+    },
+    {
+      icon: '⚙️',
+      title: 'Customize Anytime',
+      body: 'Head to Settings to change your wallpaper, privacy preferences, and account details whenever you like.'
+    },
+    {
+      icon: '🎉',
+      title: "You're All Set!",
+      body: "That's the tour! Start exploring WebOS. Everything is at your fingertips."
+    }
+  ];
+
+  let currentStep = 0;
+
+  function renderTour() {
+    const s = STEPS[currentStep];
+    document.getElementById('tour-icon').textContent  = s.icon;
+    document.getElementById('tour-title').textContent = s.title;
+    document.getElementById('tour-body').textContent  = s.body;
+
+    /* progress dots */
+    const prog = document.getElementById('tour-progress');
+    prog.innerHTML = '';
+    STEPS.forEach((_, i) => {
+      const d = document.createElement('span');
+      d.className = 'tour-dot' +
+        (i === currentStep ? ' active' : i < currentStep ? ' done' : '');
+      prog.appendChild(d);
+    });
+
+    /* buttons */
+    document.getElementById('tour-prev').style.display =
+      currentStep > 0 ? 'inline-flex' : 'none';
+
+    const nextBtn = document.getElementById('tour-next');
+    if (currentStep === STEPS.length - 1) {
+      nextBtn.textContent = 'Get Started';
+      nextBtn.onclick = closeTour;
+    } else {
+      nextBtn.textContent = 'Next';
+      nextBtn.onclick = nextStep;
+    }
+  }
+
+  function nextStep() {
+    if (currentStep < STEPS.length - 1) {
+      currentStep++;
+      renderTour();
+    } else {
+      closeTour();
+    }
+  }
+
+  function prevStep() {
+    if (currentStep > 0) {
+      currentStep--;
+      renderTour();
+    }
+  }
+
+  function closeTour() {
+    const overlay = document.getElementById('tour-overlay');
+    overlay.classList.add('hiding');
+    overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
+  }
+
+  /* initialise tour */
+  renderTour();
+</script>
+
+</body>
+</html>

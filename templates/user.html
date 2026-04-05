@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="step-icon" aria-hidden="true">
+  <svg viewBox="0 0 48 48" fill="none">
+    <circle cx="24" cy="24" r="23" stroke="#0078d4" stroke-width="2"/>
+    <circle cx="24" cy="18" r="7" stroke="#0078d4" stroke-width="2"/>
+    <path d="M10 38c0-7.732 6.268-14 14-14s14 6.268 14 14" stroke="#0078d4" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<h1 class="oobe-title">Create your account</h1>
+<p class="oobe-subtitle">
+  Set up a username and password to personalize your WebOS experience.
+</p>
+
+<form method="post" action="{{ url_for('step_user') }}" novalidate id="user-form">
+  {% if error %}
+    <p class="error-msg" role="alert" style="margin-bottom:18px;">
+      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-4a1 1 0 00-1 1v3a1 1 0 002 0V7a1 1 0 00-1-1zm0 7a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd"/>
+      </svg>
+      {{ error }}
+    </p>
+  {% endif %}
+
+  <div class="form-group">
+    <label class="form-label" for="username">Username</label>
+    <input
+      id="username"
+      name="username"
+      type="text"
+      class="form-input{% if error and 'username' in error.lower() %} input-error{% endif %}"
+      placeholder="e.g. alex"
+      maxlength="32"
+      autocomplete="username"
+      autofocus
+      value="{{ request.form.get('username', '') }}"
+    />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="password">Password</label>
+    <input
+      id="password"
+      name="password"
+      type="password"
+      class="form-input{% if error and 'password' in error.lower() %} input-error{% endif %}"
+      placeholder="At least 4 characters"
+      maxlength="128"
+      autocomplete="new-password"
+    />
+  </div>
+
+  <div class="form-group">
+    <label class="form-label" for="confirm_password">Confirm Password</label>
+    <input
+      id="confirm_password"
+      name="confirm_password"
+      type="password"
+      class="form-input{% if error and 'match' in error.lower() %} input-error{% endif %}"
+      placeholder="Re-enter your password"
+      maxlength="128"
+      autocomplete="new-password"
+    />
+    <p id="pw-match-hint" class="hint-text" style="margin-top:6px; margin-bottom:0; display:none;"></p>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Profile Colour</label>
+    <div class="avatar-picker" role="radiogroup" aria-label="Choose a profile colour">
+      {% set colors = [
+        ('#0078d4', 'Blue'),
+        ('#00b4d8', 'Teal'),
+        ('#7b2d8b', 'Purple'),
+        ('#107c10', 'Green'),
+        ('#d83b01', 'Orange'),
+        ('#e3008c', 'Pink'),
+      ] %}
+      {% for value, label in colors %}
+        <label class="avatar-color-option" title="{{ label }}">
+          <input
+            type="radio"
+            name="avatar_color"
+            value="{{ value }}"
+            class="avatar-radio"
+            {% if loop.first %}checked{% endif %}
+          />
+          <span class="avatar-swatch" style="background:{{ value }};" aria-label="{{ label }}"></span>
+        </label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a href="{{ url_for('step_privacy') }}" class="btn btn-secondary">Back</a>
+    <button type="submit" class="btn btn-primary">Next</button>
+  </div>
+</form>
+
+<script>
+  const pw  = document.getElementById('password');
+  const cpw = document.getElementById('confirm_password');
+  const hint = document.getElementById('pw-match-hint');
+
+  function checkMatch() {
+    if (!cpw.value) { hint.style.display = 'none'; return; }
+    if (pw.value === cpw.value) {
+      hint.textContent = '✓ Passwords match';
+      hint.style.color = '#107c10';
+    } else {
+      hint.textContent = '✗ Passwords do not match';
+      hint.style.color = '#a4262c';
+    }
+    hint.style.display = 'block';
+  }
+  pw.addEventListener('input', checkMatch);
+  cpw.addEventListener('input', checkMatch);
+</script>
+
+{% endblock %}
